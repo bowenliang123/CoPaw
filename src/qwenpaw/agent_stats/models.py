@@ -21,10 +21,6 @@ class DailyStats(BaseModel):
     user_messages: int
     assistant_messages: int
     total_messages: int
-    prompt_tokens: int
-    completion_tokens: int
-    llm_calls: int
-    tool_calls: int
 
 
 class AgentStatsSummary(BaseModel):
@@ -32,10 +28,6 @@ class AgentStatsSummary(BaseModel):
     total_messages: int
     total_user_messages: int
     total_assistant_messages: int
-    total_prompt_tokens: int
-    total_completion_tokens: int
-    total_llm_calls: int
-    total_tool_calls: int
     by_date: list[DailyStats]
     channel_stats: list[ChannelStats]
     start_date: str

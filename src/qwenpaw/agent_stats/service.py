@@ -14,7 +14,6 @@ import aiofiles.os
 import orjson
 
 from ..app.runner.repo import JsonChatRepository
-from ..token_usage import get_token_usage_manager
 from .models import (
     AgentStatsSummary,
     ChannelStats,
@@ -104,8 +103,7 @@ def _process_session_file(
     channel: str,
     session_stem: str,
     active_sessions: dict[str, set[str]],
-) -> tuple[int, bool]:
-    tool_call_count = 0
+) -> bool:
     has_messages_in_range = False
     try:
         memories = (
@@ -159,22 +157,13 @@ def _process_session_file(
                 stats["assistant_messages"] += 1
                 stats["total_messages"] += 1
 
-            if isinstance(content, list):
-                for block in content:
-                    if (
-                        isinstance(block, dict)
-                        and block.get("type") == "tool_use"
-                    ):
-                        ds["tool_calls"] += 1
-                        tool_call_count += 1
-
     except Exception as e:
         logger.debug("Failed to count messages in session: %s", e)
 
     if has_messages_in_range and channel in channel_stats:
         channel_stats[channel]["session_count"] += 1
 
-    return tool_call_count, has_messages_in_range
+    return has_messages_in_range
 
 
 class AgentStatsService:
@@ -201,17 +190,12 @@ class AgentStatsService:
                 "user_messages": 0,
                 "assistant_messages": 0,
                 "total_messages": 0,
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "llm_calls": 0,
-                "tool_calls": 0,
             }
 
         start_date_str = start_date.isoformat()
         end_date_str = end_date.isoformat()
 
         channel_stats: dict[str, dict] = {}
-        total_tool_calls = 0
         active_sessions: dict[str, set[str]] = {}
         total_active_sessions = 0
 
@@ -256,7 +240,7 @@ class AgentStatsService:
 
                 session_fd_sem = asyncio.Semaphore((os.cpu_count() or 4) * 2)
 
-                async def _process_one(session_file: Path) -> tuple[int, bool]:
+                async def _process_one(session_file: Path) -> bool:
                     async with session_fd_sem:
                         if _should_skip_by_mtime(
                             session_file,
@@ -305,27 +289,12 @@ class AgentStatsService:
                 tasks = [_process_one(sf) for sf in session_files]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
                 for result in results:
-                    if isinstance(result, tuple) and len(result) == 2:
-                        tool_calls, has_messages = result
-                        total_tool_calls += tool_calls
-                        if has_messages:
-                            total_active_sessions += 1
+                    if isinstance(result, bool) and result:
+                        total_active_sessions += 1
                     elif isinstance(result, Exception):
                         logger.debug("Failed to process session: %s", result)
             except Exception as e:
                 logger.warning("Failed to load message statistics: %s", e)
-
-        token_summary = await get_token_usage_manager().get_summary(
-            start_date=start_date,
-            end_date=end_date,
-        )
-        for date_str, ts in token_summary.by_date.items():
-            if date_str in daily_stats:
-                daily_stats[date_str]["prompt_tokens"] = ts.prompt_tokens
-                daily_stats[date_str][
-                    "completion_tokens"
-                ] = ts.completion_tokens
-                daily_stats[date_str]["llm_calls"] = ts.call_count
 
         for date_str, session_set in active_sessions.items():
             if date_str in daily_stats:
@@ -344,10 +313,6 @@ class AgentStatsService:
             total_messages=total_messages,
             total_user_messages=total_user_messages,
             total_assistant_messages=total_assistant_messages,
-            total_prompt_tokens=token_summary.total_prompt_tokens,
-            total_completion_tokens=token_summary.total_completion_tokens,
-            total_llm_calls=token_summary.total_calls,
-            total_tool_calls=total_tool_calls,
             by_date=[DailyStats.model_validate(ds) for ds in by_date],
             channel_stats=[
                 ChannelStats(
