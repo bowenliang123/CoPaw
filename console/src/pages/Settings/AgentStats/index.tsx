@@ -155,8 +155,7 @@ function AgentStatsPage() {
 
   const hasData =
     data &&
-    ((data.total_active_sessions ?? 0) > 0 ||
-      (data.total_messages ?? 0) > 0);
+    ((data.total_active_sessions ?? 0) > 0 || (data.total_messages ?? 0) > 0);
 
   const messageColumnConfig = useMemo(
     () =>
@@ -281,7 +280,6 @@ function AgentStatsPage() {
                     label={t("agentStats.totalMessages")}
                     tooltip={t("agentStats.totalMessagesTooltip")}
                   />
-
                 </div>
 
                 <div className={styles.trendRow}>
@@ -320,7 +318,6 @@ function AgentStatsPage() {
                       <Column {...chatColumnConfig} />
                     </div>
                   </Card>
-
                 </div>
 
                 {(chatPieConfig || messagePieConfig) && (
