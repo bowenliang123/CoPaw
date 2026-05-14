@@ -13,6 +13,7 @@ export interface DailyStats {
   user_messages: number;
   assistant_messages: number;
   total_messages: number;
+  unique_users: number;
 }
 
 export interface AgentStatsSummary {

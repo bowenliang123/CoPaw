@@ -23,6 +23,7 @@ type ChartDataItem = {
   userMessages: number;
   assistantMessages: number;
   totalMessages: number;
+  uniqueUsers: number;
 };
 
 interface ColumnSeries {
@@ -150,6 +151,7 @@ function AgentStatsPage() {
       userMessages: d.user_messages,
       assistantMessages: d.assistant_messages,
       totalMessages: d.total_messages,
+      uniqueUsers: d.unique_users,
     }));
   }, [data?.by_date]);
 
@@ -184,6 +186,18 @@ function AgentStatsPage() {
           { key: "activeSessions", label: t("agentStats.activeSessions") },
         ],
         ["#ff7f16", "#3b82f6"],
+        isDarkMode,
+        crossesYear,
+      ),
+    [chartData, t, isDarkMode, crossesYear],
+  );
+
+  const usersColumnConfig = useMemo(
+    () =>
+      getColumnConfig(
+        chartData,
+        [{ key: "uniqueUsers", label: t("agentStats.uniqueUsers") }],
+        ["#52c41a"],
         isDarkMode,
         crossesYear,
       ),
@@ -316,6 +330,26 @@ function AgentStatsPage() {
                   >
                     <div className={styles.chartContainerShort}>
                       <Column {...chatColumnConfig} />
+                    </div>
+                  </Card>
+                </div>
+
+                <div className={styles.trendRow}>
+                  <Card
+                    className={styles.chartCard}
+                    title={
+                      <Tooltip
+                        title={t("agentStats.usersTrendTooltip")}
+                        placement="bottom"
+                      >
+                        <span className={styles.chartTitle}>
+                          {t("agentStats.usersTrend")}
+                        </span>
+                      </Tooltip>
+                    }
+                  >
+                    <div className={styles.chartContainerShort}>
+                      <Column {...usersColumnConfig} />
                     </div>
                   </Card>
                 </div>

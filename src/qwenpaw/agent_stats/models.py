@@ -21,6 +21,7 @@ class DailyStats(BaseModel):
     user_messages: int
     assistant_messages: int
     total_messages: int
+    unique_users: int
 
 
 class AgentStatsSummary(BaseModel):

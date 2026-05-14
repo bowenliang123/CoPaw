@@ -103,8 +103,10 @@ def _process_session_file(
     channel: str,
     session_stem: str,
     active_sessions: dict[str, set[str]],
+    unique_users: dict[str, set[str]],
 ) -> bool:
     has_messages_in_range = False
+    session_dates: set[str] = set()
     try:
         memories = (
             session_data.get("agent", {}).get("memory", {}).get("memories")
@@ -141,6 +143,7 @@ def _process_session_file(
 
             has_messages_in_range = True
             active_sessions.setdefault(date_str, set()).add(session_stem)
+            session_dates.add(date_str)
 
             ds = daily_stats[date_str]
             role = msg_data.get("role", "")
@@ -162,6 +165,9 @@ def _process_session_file(
 
     if has_messages_in_range and channel in channel_stats:
         channel_stats[channel]["session_count"] += 1
+        user_id = session_stem.split("_")[0] if "_" in session_stem else session_stem
+        for date_str in session_dates:
+            unique_users.setdefault(date_str, set()).add(user_id)
 
     return has_messages_in_range
 
@@ -190,6 +196,7 @@ class AgentStatsService:
                 "user_messages": 0,
                 "assistant_messages": 0,
                 "total_messages": 0,
+                "unique_users": 0,
             }
 
         start_date_str = start_date.isoformat()
@@ -197,6 +204,7 @@ class AgentStatsService:
 
         channel_stats: dict[str, dict] = {}
         active_sessions: dict[str, set[str]] = {}
+        unique_users: dict[str, set[str]] = {}
         total_active_sessions = 0
 
         if chats_file.exists():
@@ -284,6 +292,7 @@ class AgentStatsService:
                             channel,
                             stem,
                             active_sessions,
+                            unique_users,
                         )
 
                 tasks = [_process_one(sf) for sf in session_files]
@@ -299,6 +308,10 @@ class AgentStatsService:
         for date_str, session_set in active_sessions.items():
             if date_str in daily_stats:
                 daily_stats[date_str]["active_sessions"] = len(session_set)
+
+        for date_str, user_set in unique_users.items():
+            if date_str in daily_stats:
+                daily_stats[date_str]["unique_users"] = len(user_set)
 
         by_date = [daily_stats[d] for d in sorted(daily_stats.keys())]
 
