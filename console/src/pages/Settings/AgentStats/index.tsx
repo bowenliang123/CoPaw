@@ -225,17 +225,6 @@ function AgentStatsPage() {
     [isDarkMode],
   );
 
-  const chatPieConfig = useMemo(() => {
-    if (!data?.channel_stats?.length) return null;
-    return {
-      ...pieCommon,
-      data: data.channel_stats.map((item) => ({
-        channel: item.channel,
-        value: Number(item.session_count),
-      })),
-    };
-  }, [data?.channel_stats, pieCommon]);
-
   const messagePieConfig = useMemo(() => {
     if (!data?.channel_stats?.length) return null;
     return {
@@ -352,51 +341,27 @@ function AgentStatsPage() {
                       <Column {...usersColumnConfig} />
                     </div>
                   </Card>
+
+                  {messagePieConfig && (
+                    <Card
+                      className={styles.chartCard}
+                      title={
+                        <Tooltip
+                          title={t("agentStats.messagesByChannelTooltip")}
+                          placement="bottom"
+                        >
+                          <span className={styles.chartTitle}>
+                            {t("agentStats.messagesByChannel")}
+                          </span>
+                        </Tooltip>
+                      }
+                    >
+                      <div className={styles.pieChartContainer}>
+                        <Pie {...messagePieConfig} />
+                      </div>
+                    </Card>
+                  )}
                 </div>
-
-                {(chatPieConfig || messagePieConfig) && (
-                  <div className={styles.pieChartsRow}>
-                    {chatPieConfig && (
-                      <Card
-                        className={styles.chartCard}
-                        title={
-                          <Tooltip
-                            title={t("agentStats.sessionsByChannelTooltip")}
-                            placement="bottom"
-                          >
-                            <span className={styles.chartTitle}>
-                              {t("agentStats.sessionsByChannel")}
-                            </span>
-                          </Tooltip>
-                        }
-                      >
-                        <div className={styles.pieChartContainer}>
-                          <Pie {...chatPieConfig} />
-                        </div>
-                      </Card>
-                    )}
-
-                    {messagePieConfig && (
-                      <Card
-                        className={styles.chartCard}
-                        title={
-                          <Tooltip
-                            title={t("agentStats.messagesByChannelTooltip")}
-                            placement="bottom"
-                          >
-                            <span className={styles.chartTitle}>
-                              {t("agentStats.messagesByChannel")}
-                            </span>
-                          </Tooltip>
-                        }
-                      >
-                        <div className={styles.pieChartContainer}>
-                          <Pie {...messagePieConfig} />
-                        </div>
-                      </Card>
-                    )}
-                  </div>
-                )}
               </>
             ) : (
               <Empty

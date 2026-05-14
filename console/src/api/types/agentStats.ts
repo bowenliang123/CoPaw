@@ -1,6 +1,5 @@
 export interface ChannelStats {
   channel: string;
-  session_count: number;
   user_messages: number;
   assistant_messages: number;
   total_messages: number;

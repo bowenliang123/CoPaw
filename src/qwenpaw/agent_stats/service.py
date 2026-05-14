@@ -115,7 +115,6 @@ def _process_session_file(
         stats = channel_stats.setdefault(
             channel,
             {
-                "session_count": 0,
                 "user_messages": 0,
                 "assistant_messages": 0,
                 "total_messages": 0,
@@ -164,7 +163,6 @@ def _process_session_file(
         logger.debug("Failed to count messages in session: %s", e)
 
     if has_messages_in_range and channel in channel_stats:
-        channel_stats[channel]["session_count"] += 1
         user_id = session_stem.split("_")[0] if "_" in session_stem else session_stem
         for date_str in session_dates:
             unique_users.setdefault(date_str, set()).add(user_id)
@@ -330,7 +328,6 @@ class AgentStatsService:
             channel_stats=[
                 ChannelStats(
                     channel=ch,
-                    session_count=cnts["session_count"],
                     user_messages=cnts["user_messages"],
                     assistant_messages=cnts["assistant_messages"],
                     total_messages=cnts["total_messages"],

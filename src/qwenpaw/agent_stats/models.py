@@ -8,7 +8,6 @@ from pydantic import BaseModel
 
 class ChannelStats(BaseModel):
     channel: str
-    session_count: int
     user_messages: int
     assistant_messages: int
     total_messages: int
